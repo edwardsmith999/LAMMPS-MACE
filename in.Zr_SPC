@@ -1,0 +1,93 @@
+# SPCE ZrO2 Thermal investigations 
+log     3D_Zr_O2.log
+units   metal
+atom_style	   full
+
+boundary        p p p
+dimension 3
+kspace_style pppm 1e-6
+
+#   System Setup   #
+neighbor	    2.0 bin
+
+lattice hcp 5.15
+
+region          box block 0 3 0 3 0 16
+region          rSolidBot block 0 3 0 3 0 6
+region          rFixedBot block  0 3 0 3 0 1
+region          rThermostatBot block  0 3 0 3 1 2
+region          rH2O_mol block 0 3 0 3 4 14
+
+create_box 4 box bond/types 2 angle/types 1 &
+            extra/bond/per/atom 2 extra/angle/per/atom 1 extra/special/per/atom 2
+
+mass            1 91.224
+mass            2 15.9994
+mass            3 15.9994
+mass            4 1.008
+
+####################### Zirconium ####################### 
+####################### Martins ####################### 
+pair_style lj/cut/coul/long 10.0
+pair_coeff 1 1 0.000001206425940964 5.714  # Zr sigma = 5.714  epsilon/kb (K) = 0.014  q = 0.7952
+pair_coeff 2 2 0.01207597897592 2.630    # Oxygen_solid  sigma = 2.630  epsilon/kb (K) = 140.136 q = -0.3976
+
+bond_style zero
+bond_coeff 1 0.0
+
+####################### Zirconia ####################### 
+read_data ZrO2_Slab.lmp add append
+
+###################### SPC/E ####################### 
+pair_coeff 3 3 0.1553 3.166
+pair_coeff 3 4 0.0    1.0
+pair_coeff 4 4 0.0    1.0
+
+bond_style harmonic 
+bond_coeff 1 0 1.0
+bond_coeff 2 0 1.0
+
+angle_style harmonic
+angle_coeff 1 0 109.47
+
+molecule        water spce.mol
+
+group           gSolidBot region rSolidBot 
+group           gThermostatBot region rThermostatBot
+group           gFixedBot region rFixedBot 
+
+read_data       water_v2.data add append group gH2O_mol shift 0 0 0
+
+###### this creates atoms randomly for the water equilibration
+# group           gH2O_mol empty
+# create_atoms    0 random 1500 37 rH2O_mol mol water 37 overlap 0.3
+
+group 	        gH2O_mol type 3 4
+
+fix             rigidBonds gH2O_mol shake 1e-5 100 0 b 2 a 1 mol water
+
+fix             integrate all nve
+fix             integrate_water gH2O_mol langevin 300 300 5e-2 37
+fix             integrate_solid_bot gThermostatBot langevin 300 300 5e-2 37
+
+# ####################### Tethering ####################### 
+fix springBot gSolidBot spring/self 107.635             # E*sigma = 209e9 * 5.15e-10 = 107.635
+fix fixedBot gFixedBot setforce 0 0 0 
+
+thermo 100
+timestep 5e-4
+
+dump            dynamicsDump all xyz 10 vmd_out.xyz
+dump_modify     dynamicsDump element Zr O O H 
+
+compute temp_liquid gH2O_mol temp/com
+compute temp_solidBot gSolidBot temp/com
+
+compute		    temperaturelower  gSolidBot  temp/partial 1 1 1
+compute		    temperatureflow gH2O_mol temp/partial 1 1 1
+
+thermo_style	custom step temp etotal pe evdwl ecoul press vol lx ly lz  c_temp_liquid c_temperatureflow c_temp_solidBot c_temperaturelower density
+thermo_modify	norm yes
+
+run 0
+
