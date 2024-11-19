@@ -4,6 +4,7 @@ A script to run LAMMPS through the Python interface with forces set using the MA
 This runs an example of ZnO2 wall with H2O water above it and overwrites the forces based on the MACE ML potential.
 
 The required software is as follows
+
      numpy
      scipy    
      Python binding for [lammps](https://docs.lammps.org/Python_head.html)
