@@ -5,10 +5,10 @@ This runs an example of ZnO2 wall with H2O water above it and overwrites the for
 
 The required software is as follows
 
-     numpy
-     scipy    
-     Python binding for [lammps](https://docs.lammps.org/Python_head.html)
-     [ase](https://databases.fysik.dtu.dk/ase/install.html)
-     [MACE](https://mace-docs.readthedocs.io/en/latest/guide/installation.html)
+- numpy
+- matplotlib
+- Python binding for [lammps](https://docs.lammps.org/Python_head.html)
+- [ase](https://databases.fysik.dtu.dk/ase/install.html)
+- [MACE](https://mace-docs.readthedocs.io/en/latest/guide/installation.html)
 
 This then runs and plots the difference between the LAMMPS and MACE prediction.
